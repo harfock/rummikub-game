@@ -5,66 +5,67 @@ let translations = {};
 // 1. Load the Language Files
 async function loadLanguage(lang) {
     try {
+        // In local environments, Chrome may block 'fetch' for local files. 
+        // We use a fallback if the file isn't found.
         const response = await fetch(`./lang/${lang}.json`);
+        if (!response.ok) throw new Error('File not found');
         translations = await response.json();
-        currentLang = lang;
-        updateUI();
     } catch (error) {
-        console.error("Error loading language:", error);
+        console.warn("Language file failed, using defaults");
+        translations = {
+            title: "魔力橋樂齡版",
+            rules_title: "遊戲規則",
+            rules_content: "請組合您的數字牌...",
+            start_game: "開始遊戲",
+            hint_btn: "提示",
+            draw_btn: "抽牌",
+            save_btn: "儲存"
+        };
     }
+    currentLang = lang;
+    updateUI();
 }
 
 // 2. Update all text on the screen
 function updateUI() {
-    document.getElementById('game-title').innerText = translations.title;
-    document.getElementById('rules-header').innerText = translations.rules_title;
-    document.getElementById('rules-content').innerText = translations.rules_content;
-    document.getElementById('start-btn').innerText = translations.start_game;
-    document.getElementById('rank-btn').innerText = translations.rank_btn || (currentLang === 'zh-tw' ? "排行榜" : "Rankings");
+    if(document.getElementById('game-title')) document.getElementById('game-title').innerText = translations.title;
+    if(document.getElementById('rules-header')) document.getElementById('rules-header').innerText = translations.rules_title;
+    if(document.getElementById('rules-content')) document.getElementById('rules-content').innerText = translations.rules_content;
+    if(document.getElementById('start-btn')) document.getElementById('start-btn').innerText = translations.start_game;
     
-    // Game screen buttons
-    document.getElementById('hint-btn').innerText = translations.hint_btn;
-    document.getElementById('draw-btn').innerText = translations.draw_btn;
-    document.getElementById('save-btn').innerText = translations.save_btn;
+    // Safety check for UI buttons
+    const rankBtn = document.getElementById('rank-btn');
+    if(rankBtn) rankBtn.innerText = translations.rank_btn || (currentLang === 'zh-tw' ? "排行榜" : "Rankings");
     
-    // Set HTML lang attribute for accessibility
     document.documentElement.lang = currentLang;
 }
 
-// 3. Switch Language Function
 function setLanguage(lang) {
     loadLanguage(lang);
-    // Save preference to the browser so it remembers next time
     localStorage.setItem('preferredLang', lang);
 }
 
 // 4. Screen Switching Logic
-// This function handles the visual transition and triggers the game logic
 function initGame() {
-    // 1. Hide the Menu, Show the Game Screen
     const mainMenu = document.getElementById('main-menu');
     const gameScreen = document.getElementById('game-screen');
 
     if (mainMenu && gameScreen) {
-        mainMenu.style.display = 'none';
-        gameScreen.style.display = 'block';
+        mainMenu.style.setProperty('display', 'none', 'important'); // Forces Chrome to respect the change
+        gameScreen.style.setProperty('display', 'block', 'important');
     }
     
-    // 2. Start the actual Rummikub logic from game.js
-    // We use the renamed function 'setupNewGame' to avoid naming conflicts
+    // Start logic from game.js
     if (typeof setupNewGame === "function") {
         setupNewGame(); 
     } else {
-        console.error("Game logic (setupNewGame) not loaded yet!");
+        console.error("Game logic missing!");
     }
 }
 
-// Initialize on page load
 window.onload = () => {
     const savedLang = localStorage.getItem('preferredLang') || 'zh-tw';
     loadLanguage(savedLang);
-    
-    // Ensure the profile dropdown is populated if storage.js is loaded
     if (typeof updateProfileDropdown === "function") {
         updateProfileDropdown();
     }
