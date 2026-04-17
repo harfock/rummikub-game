@@ -33,3 +33,37 @@ function saveGameProgress(gameState) {
 function getRankings() {
     return JSON.parse(localStorage.getItem('rummikub_rankings')) || [];
 }
+// Add or Update Ranking
+function updateRanking(playerName, score) {
+    let rankings = JSON.parse(localStorage.getItem('rummikub_rankings')) || [];
+    
+    // Find if player already exists
+    let playerEntry = rankings.find(r => r.name === playerName);
+    if (playerEntry) {
+        playerEntry.score += score;
+    } else {
+        rankings.push({ name: playerName, score: score });
+    }
+
+    // Sort: Highest score first
+    rankings.sort((a, b) => b.score - a.score);
+    
+    // Keep only top 10
+    rankings = rankings.slice(0, 10);
+    
+    localStorage.setItem('rummikub_rankings', JSON.stringify(rankings));
+}
+
+// Function to display ranking in a simple table
+function viewRanking() {
+    let rankings = JSON.parse(localStorage.getItem('rummikub_rankings')) || [];
+    let rankHtml = "<h3>排行榜 (Rankings)</h3><table style='width:100%; font-size:1.5rem;'>";
+    
+    rankings.forEach((r, index) => {
+        rankHtml += `<tr><td>${index + 1}. ${r.name}</td><td>${r.score} pts</td></tr>`;
+    });
+    
+    rankHtml += "</table><button class='btn-large' onclick='location.reload()'>返回 (Back)</button>";
+    
+    document.getElementById('main-menu').innerHTML = rankHtml;
+}
