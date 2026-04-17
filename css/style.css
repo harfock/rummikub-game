@@ -119,3 +119,12 @@ body {
     box-shadow: 0 10px 20px rgba(0,0,0,0.4);
     background-color: #fffdec; /* Make it slightly brighter */
 }
+@keyframes successPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); border-color: #28a745; }
+    100% { transform: scale(1); }
+}
+
+.tile-placed {
+    animation: successPop 0.4s ease-out;
+}
