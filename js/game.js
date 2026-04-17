@@ -27,7 +27,7 @@ function shuffle(array) {
 }
 
 // 2. Start Game Logic
-function initGame() {
+function setupNewGame() {
     createDeck();
     
     // Deal 14 tiles to each player
