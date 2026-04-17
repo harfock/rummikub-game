@@ -8,6 +8,82 @@ let playerHand = [];
 let aiHands = [[], [], []]; // 3 AI Players
 let tableSets = []; // Tiles currently on the table
 
+// Add these variables to the top of game.js
+let initialMeldDone = false; // Tracks if the 30-point rule is met
+let tilesPlayedThisTurn = []; // Track tiles moved from hand to table this turn
+
+// Allow dragging tiles BACK to the hand
+const playerHandArea = document.getElementById('player-tiles');
+playerHandArea.ondragover = (e) => e.preventDefault();
+playerHandArea.ondrop = (e) => {
+    const tileData = JSON.parse(e.dataTransfer.getData("tile"));
+    const source = e.dataTransfer.getData("source");
+
+    if (source === "table") {
+        // Find and remove from table
+        const tableTiles = document.getElementById('common-area');
+        const tileDiv = Array.from(tableTiles.children).find(div => 
+            div.dataset.num == tileData.num && div.dataset.color == tileData.color
+        );
+        if (tileDiv) {
+            tableTiles.removeChild(tileDiv);
+            playerHand.push(tileData);
+            // Remove from turn tracker
+            tilesPlayedThisTurn = tilesPlayedThisTurn.filter(t => !(t.num == tileData.num && t.color == tileData.color));
+            renderPlayerHand();
+        }
+    }
+};
+
+function handlePassTurn() {
+    const tableArea = document.getElementById('common-area');
+    
+    // 1. Identify all "Sets" on the board
+    // In a professional version, you would group tiles by proximity.
+    // For this version, we will validate the ENTIRE table as groups of 3+.
+    const allTableTiles = Array.from(tableArea.children).map(div => ({
+        num: parseInt(div.dataset.num),
+        color: div.dataset.color
+    }));
+
+    // 2. Validation Logic
+    if (tilesPlayedThisTurn.length === 0) {
+        showFeedback("您本回合沒有出牌，請抽牌或出牌。", "No tiles played. Draw or play.");
+        return;
+    }
+
+    // Check 30-point rule for first move
+    if (!initialMeldDone) {
+        const points = tilesPlayedThisTurn.reduce((sum, t) => sum + (t.color === 'joker' ? 10 : t.num), 0);
+        if (points < 30) {
+            showFeedback("初次出牌需滿30分！目前：" + points, "Initial meld must be 30+ points!");
+            return;
+        }
+        initialMeldDone = true;
+    }
+
+    // 3. Complete Board Check
+    // We check if all tiles on the table form valid sets of 3+
+    if (!validateEntireBoard(allTableTiles)) {
+        showFeedback("桌面組合無效！請檢查顏色或數字順序。", "Invalid board! Check colors/runs.");
+        return;
+    }
+
+    // 4. Success - Clear turn data and start AI
+    tilesPlayedThisTurn = [];
+    showFeedback("組合正確！輪到電腦...", "Valid! Computer's turn...");
+    aiTurns();
+}
+
+function validateEntireBoard(tiles) {
+    if (tiles.length === 0) return true;
+    if (tiles.length < 3) return false;
+
+    // Simplified logic: Check if the tiles provided form at least one valid Group or Run
+    // To allow "different directions," a real engine splits tiles by distance.
+    // Here, we check if the tiles on the table are mathematically valid as a whole.
+    return isValidSet(tiles); 
+}
 // 1. Initialize the Deck (2 sets of each card + 2 jokers)
 function createDeck() {
     deck = [];
@@ -168,15 +244,18 @@ function showHint() {
 
 // 5. Draw Tile Logic
 function playerDrawTile() {
+    if (tilesPlayedThisTurn.length > 0) {
+        showFeedback("您已經出牌，不能再抽牌！", "You already played tiles, cannot draw!");
+        return;
+    }
+
     if (deck.length > 0) {
         const newTile = deck.pop();
         playerHand.push(newTile);
         renderPlayerHand();
-        updateStatusBar(); // Update the "Remaining Tiles" count
-        showFeedback("您抽了一張牌，換電腦出牌。", "You drew a tile. Computer's turn.");
-        
-        // Drawing a tile ends the turn immediately
-        setTimeout(aiTurns, 1500);
+        updateStatusBar();
+        showFeedback("您抽了一張牌。換電腦...", "Drawn. AI's turn...");
+        setTimeout(aiTurns, 1500); // End turn automatically
     }
 }
 
