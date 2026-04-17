@@ -61,10 +61,21 @@
         <nav id="action-bar">
             <button class="btn-action btn-hint" onclick="showHint()">提示幫助 (Hint)</button>
             <button class="btn-action btn-draw" onclick="playerDrawTile()">抽一張牌</button>
-            <button class="btn-action btn-play" onclick="handlePassTurn()" id="pass-btn">結束回合 (Pass)</button>
+            <button class="btn-action btn-play" onclick="endTurn()" id="pass-btn">結束回合 (Pass)</button>
         </nav>
     </div>
+    <div id="player-hand-container">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>您的牌面：</h3>
+        <div class="sort-controls">
+            <button onclick="sortHand('number')" class="btn-action" style="padding: 5px 15px; font-size: 1rem;">按數字排序</button>
+            <button onclick="sortHand('color')" class="btn-action" style="padding: 5px 15px; font-size: 1rem;">按顏色排序</button>
+        </div>
+    </div>
+    <div id="player-tiles"></div>
+</div>
 
+    
     <script src="js/storage.js"></script>
        <script src="js/game.js"></script>
      <script src="js/ui.js"></script>
