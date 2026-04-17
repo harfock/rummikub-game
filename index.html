@@ -3,61 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rummikub - 樂齡版</title>
+    <title>魔力橋樂齡版 | Rummikub Senior</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-    <div id="language-switcher">
-        <button onclick="changeLang('zh')">中文 (繁體)</button>
-        <button onclick="changeLang('en')">English</button>
-    </div>
+    <header>
+        <div id="language-toggle">
+            <button onclick="setLanguage('zh-tw')">中文</button>
+            <button onclick="setLanguage('en')">English</button>
+        </div>
+        <div id="profile-area">
+            <span id="welcome-text">歡迎!</span>
+            <select id="user-profile" onchange="switchProfile()">
+                <option value="default">預設玩家</option>
+                </select>
+        </div>
+    </header>
 
-    <div id="main-menu" class="container">
-        <h1 id="title">魔力橋 (Rummikub)</h1>
+    <main id="main-menu">
+        <h1 id="game-title">魔力橋樂齡版</h1>
         
-        <div id="rules-section">
-            <h2 id="rules-header">遊戲規則 (Rules)</h2>
-            <p id="rules-text">
-                將手中的數字牌組成「順組」(同色連數) 或「群組」(同數不同色) 擺放到桌上。
-                最快出完牌的人獲勝！
-            </p>
+        <section id="rules-box">
+            <h2 id="rules-header">遊戲規則</h2>
+            <p id="rules-content">載入中...</p>
+        </section>
+
+        <div class="menu-actions">
+            <button class="btn-large" onclick="initGame()" id="start-btn">開始遊戲</button>
+            <button class="btn-large secondary" onclick="viewRanking()" id="rank-btn">排行榜</button>
+        </div>
+    </main>
+
+    <div id="game-screen" style="display:none;">
+        <div id="game-status">
+            <h2 id="feedback-msg">加油！輪到您了。</h2>
+            <button class="btn-save" onclick="saveGameProgress()">儲存並退出</button>
         </div>
 
-        <div id="profile-selection">
-            <h3 id="select-profile">選擇玩家身份:</h3>
-            <select id="user-select">
-                <option value="Player1">玩家 1</option>
-                <option value="New">+ 新增玩家</option>
-            </select>
+        <div id="game-table">
+            <div id="common-area">
+                </div>
         </div>
 
-        <div class="menu-buttons">
-            <button class="btn-start" onclick="startGame()" id="start-btn">開始遊戲</button>
-            <button class="btn-rank" onclick="showRanking()" id="rank-btn">排行榜</button>
+        <div id="player-hand-container">
+            <h3>您的牌面：</h3>
+            <div id="player-tiles">
+                </div>
         </div>
+
+        <nav id="action-bar">
+            <button class="btn-action btn-hint" onclick="showHint()">提示幫助 (Hint)</button>
+            <button class="btn-action btn-draw" onclick="playerDrawTile()">抽一張牌</button>
+            <button class="btn-action btn-play" onclick="submitMove()">完成出牌</button>
+        </nav>
     </div>
 
-    <div id="game-board" style="display:none;">
-        <div id="status-bar">
-            <span id="player-turn-msg">輪到你了！加油！</span>
-            <button onclick="saveGame()" id="save-btn">儲存離開</button>
-        </div>
-
-        <div id="table-area">
-            </div>
-
-        <div id="player-rack">
-            </div>
-
-        <div id="controls">
-            <button class="btn-hint" onclick="getHint()" id="hint-btn">提示 (Hint)</button>
-            <button class="btn-draw" onclick="drawTile()" id="draw-btn">抽牌</button>
-            <button class="btn-finish" onclick="endTurn()" id="finish-btn">結束回合</button>
-        </div>
-    </div>
-
-    <script src="js/language.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/storage.js"></script>
     <script src="js/game.js"></script>
 </body>
 </html>
