@@ -43,7 +43,7 @@
                 <div id="ai-1-count">電腦 1: 14 張</div>
                 <div id="ai-2-count">電腦 2: 14 張</div>
                 <div id="ai-3-count">電腦 3: 14 張</div>
-                <div id="deck-count" style="font-weight: bold; color: #d32f2f;">剩餘牌數: 0</div>
+                <div id="deck-count" style="font-weight: bold; color: #d32f2f;">剩餘牌數: 80</div>
             </div>
         </div>
 
@@ -61,7 +61,7 @@
         <nav id="action-bar">
             <button class="btn-action btn-hint" onclick="showHint()">提示幫助 (Hint)</button>
             <button class="btn-action btn-draw" onclick="playerDrawTile()">抽一張牌</button>
-            <button class="btn-action btn-play" onclick="submitMove()">完成出牌</button>
+            <button class="btn-action btn-play" onclick="endPlayerTurn()" style="background-color: #2196F3; color: white;">結束回合 (Pass)</button>
         </nav>
     </div>
 
