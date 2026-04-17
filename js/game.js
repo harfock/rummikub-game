@@ -158,10 +158,11 @@ function selectTile(index) {
 
 function renderPlayerHand() {
     const container = document.getElementById('player-tiles');
+    if (!container) return;
     container.innerHTML = ''; 
 
     playerHand.forEach((tile, index) => {
-        const tileDiv = createTileElement(tile);
+        const tileDiv = createTileElement(tile); // Now this will work!
         tileDiv.draggable = true;
         
         tileDiv.ondragstart = (e) => {
@@ -441,6 +442,23 @@ function renderAiStatus() {
     document.getElementById('deck-count').innerText = `剩餘牌數: ${deck.length}`;
 }
 // game.js
+// Helper function to create a tile element with all necessary attributes
+function createTileElement(tile) {
+    const tileDiv = document.createElement('div');
+    
+    // Set classes for styling and color
+    tileDiv.className = `tile ${tile.color}`;
+    
+    // Set display text (Handle Joker)
+    tileDiv.innerText = tile.color === 'joker' ? '☺' : tile.num;
+    
+    // Critical: Store data attributes so the game logic can "read" the board
+    tileDiv.dataset.num = tile.num;
+    tileDiv.dataset.color = tile.color;
+    
+    return tileDiv;
+}
+
 
 // New function to handle the End Turn logic
 function endTurn() {
