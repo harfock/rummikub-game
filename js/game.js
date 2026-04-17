@@ -7,6 +7,9 @@ let deck = [];
 let playerHand = [];
 let aiHands = [[], [], []]; // 3 AI Players
 let tableSets = []; // Tiles currently on the table
+// Global tracking for tiles moved to the table this turn
+let tilesMovedThisTurn = [];
+
 
 // Add these variables to the top of game.js
 let initialMeldDone = false; // Tracks if the 30-point rule is met
@@ -158,33 +161,43 @@ function renderPlayerHand() {
     container.innerHTML = ''; 
 
     playerHand.forEach((tile, index) => {
-        const tileDiv = document.createElement('div');
-        tileDiv.className = `tile ${tile.color}`;
-        tileDiv.innerText = tile.color === 'joker' ? '☺' : tile.num;
-        tileDiv.draggable = true; // Enable dragging
-
-        // Identify which tile is being moved
+        const tileDiv = createTileElement(tile);
+        tileDiv.draggable = true;
+        
         tileDiv.ondragstart = (e) => {
             e.dataTransfer.setData("tileIndex", index);
-            
+            e.dataTransfer.setData("source", "hand");
         };
-
+        
         container.appendChild(tileDiv);
     });
 }
 
-// Setup the Common Area to receive drops
-const commonArea = document.getElementById('common-area');
-commonArea.ondragover = (e) => e.preventDefault(); // Necessary to allow drop
-
-commonArea.ondrop = (e) => {
-    const index = e.dataTransfer.getData("tileIndex");
-    
-
-    if (index !== "") {
-        const tile = playerHand.splice(index, 1)[0];
-        addTileToTable(tile);
-        renderPlayerHand();
+// Enable dropping tiles back into the hand area
+const playerTilesArea = document.getElementById('player-tiles');
+playerTilesArea.ondragover = (e) => e.preventDefault();
+playerTilesArea.ondrop = (e) => {
+    const source = e.dataTransfer.getData("source");
+    if (source === "table") {
+        const tileData = JSON.parse(e.dataTransfer.getData("tileData"));
+        
+        // Remove from visual table
+        const tableArea = document.getElementById('common-area');
+        const tileElements = Array.from(tableArea.children);
+        const elementToRemove = tileElements.find(el => 
+            el.dataset.num == tileData.num && el.dataset.color == tileData.color
+        );
+        
+        if (elementToRemove) {
+            tableArea.removeChild(elementToRemove);
+            // Add back to hand
+            playerHand.push(tileData);
+            // Remove from turn tracker
+            tilesMovedThisTurn = tilesMovedThisTurn.filter(t => 
+                !(t.num === tileData.num && t.color === tileData.color)
+            );
+            renderPlayerHand();
+        }
     }
 };
 
@@ -339,20 +352,23 @@ async function aiTurns() {
     autoSave(); // Save progress after AI finishes
 }
 
+// Modify addTileToTable to make table tiles draggable
 function addTileToTable(tile) {
     const tableArea = document.getElementById('common-area');
-    if (!tableArea) return;
-
     const tileDiv = document.createElement('div');
-    // Ensure color class is applied for CSS visibility
-    tileDiv.className = `tile ${tile.color} tile-placed`; 
+    tileDiv.className = `tile ${tile.color} tile-placed`;
     tileDiv.innerText = tile.color === 'joker' ? '☺' : tile.num;
-    
-    // Add to table area
+    tileDiv.dataset.num = tile.num;
+    tileDiv.dataset.color = tile.color;
+    tileDiv.draggable = true;
+
+    tileDiv.ondragstart = (e) => {
+        e.dataTransfer.setData("tileData", JSON.stringify(tile));
+        e.dataTransfer.setData("source", "table");
+    };
+
     tableArea.appendChild(tileDiv);
-    
-    // Change background to light green to show it's an "active" board
-    tableArea.style.backgroundColor = "#e8f5e9"; 
+    tilesMovedThisTurn.push(tile);
 }
 // 8. Checking for a Win
 function checkWin(playerHand, isHuman) {
@@ -428,22 +444,23 @@ function renderAiStatus() {
 
 // New function to handle the End Turn logic
 function endTurn() {
-    // 1. Gather all tiles currently in the common area
-    const currentTableTiles = Array.from(document.getElementById('common-area').children).map(div => {
-        return {
-            num: parseInt(div.dataset.num),
-            color: div.dataset.color
-        };
-    });
-
-    // 2. Logic Check: In a real game, every set on the board must be valid.
-    // For now, we check if the tiles played this turn form at least one valid set.
-    if (currentTableTiles.length > 0 && !isValidSet(currentTableTiles)) {
-        showFeedback("組合不完全！請確保每組牌至少有3張且符合規則。", "Invalid combo! Ensure sets have 3+ tiles.");
-        return; // Stop the player from passing
+    if (tilesMovedThisTurn.length === 0) {
+        showFeedback("您本回合未出牌，請出牌或抽牌。", "Please play a tile or draw.");
+        return;
     }
 
-    // 3. If valid, trigger AI turns
+    const tableTiles = Array.from(document.getElementById('common-area').children).map(div => ({
+        num: parseInt(div.dataset.num),
+        color: div.dataset.color
+    }));
+
+    // In a full Rummikub rule set, we validate if ALL tiles on table form valid groups/runs
+    if (!isValidSet(tableTiles)) {
+        showFeedback("桌面組合無效！請確保每組牌至少3張且符合規則。", "Invalid combination on board.");
+        return;
+    }
+
+    tilesMovedThisTurn = []; // Clear for next turn
     showFeedback("組合正確！輪到電腦...", "Valid! Computer's turn...");
     aiTurns();
 }
@@ -460,4 +477,21 @@ function addTileToTable(tile) {
     tileDiv.dataset.color = tile.color;
     
     tableArea.appendChild(tileDiv);
+}
+function sortHand(criteria) {
+    if (criteria === 'number') {
+        // Sort primarily by number, then by color
+        playerHand.sort((a, b) => {
+            if (a.num !== b.num) return a.num - b.num;
+            return a.color.localeCompare(b.color);
+        });
+    } else if (criteria === 'color') {
+        // Sort primarily by color, then by number
+        playerHand.sort((a, b) => {
+            if (a.color !== b.color) return a.color.localeCompare(b.color);
+            return a.num - b.num;
+        });
+    }
+    renderPlayerHand();
+    showFeedback("手牌已排序", "Hand sorted");
 }
