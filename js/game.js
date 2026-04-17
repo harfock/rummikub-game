@@ -102,17 +102,31 @@ function submitMove() {
     } else {
         showFeedback("請先點選一張您想出的牌。", "Please select a tile first.");
     }
+// Check if Human won
+if (playerHand.length === 0) {
+    showFeedback("太厲害了！您贏了！您是今天的冠軍！", "Amazing! You won! You are the champion today!");
+    // Trigger a celebratory effect or simple alert
+    alert("恭喜獲勝！🏆");
+    return;
+}
+
+// After human finishes, it's AI turn
+aiTurns();
 }
 
 // 4. Hint System
 function showHint() {
-    // Simple logic: look for pairs or sequences in player's hand
-    let message = currentLang === 'zh-tw' 
-        ? "試著找尋相同數字但不同顏色的牌！" 
-        : "Try looking for the same numbers with different colors!";
+    // Find if the player has any two cards of the same number
+    const counts = {};
+    playerHand.forEach(t => counts[t.num] = (counts[t.num] || 0) + 1);
     
-    alert(message);
-    // In a full version, we could highlight the tiles here.
+    const pairNum = Object.keys(counts).find(num => counts[num] >= 2);
+    
+    if (pairNum) {
+        showFeedback(`提示：您有一對數字 ${pairNum}，試著組合它們！`, `Hint: You have a pair of ${pairNum}s!`);
+    } else {
+        showFeedback("暫時沒有明顯組合，抽一張牌試試看？", "No obvious moves, try drawing a tile!");
+    }
 }
 
 // 5. Draw Tile Logic
@@ -135,18 +149,40 @@ function showFeedback(zh, en) {
 }
 
 // 7. Simplified AI Logic (1 vs 3)
-function aiTurns() {
-    showFeedback("電腦正在思考中...", "Computers are thinking...");
-    
-    // Simulate AI playing for 3 players
-    setTimeout(() => {
-        for(let i=0; i<3; i++) {
-            // Simple AI logic: AI always draws a tile for now 
-            // (To be expanded with real logic later)
-            aiHands[i].push(deck.pop());
+async function aiTurns() {
+    // We loop through 3 AI players
+    for (let i = 0; i < 3; i++) {
+        showFeedback(`電腦 ${i + 1} 正在思考...`, `Computer ${i + 1} is thinking...`);
+        
+        // Wait 2 seconds so the user doesn't feel rushed
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Simple AI: 50% chance to "play" a random card if they have many, 
+        // otherwise they draw.
+        if (aiHands[i].length > 5 && Math.random() > 0.5) {
+            const playedTile = aiHands[i].splice(0, 1)[0];
+            addTileToTable(playedTile);
+            showFeedback(`電腦 ${i + 1} 出了一張牌！`, `Computer ${i + 1} played a tile!`);
+        } else {
+            if (deck.length > 0) {
+                aiHands[i].push(deck.pop());
+                showFeedback(`電腦 ${i + 1} 抽了一張牌。`, `Computer ${i + 1} drew a tile.`);
+            }
         }
-        showFeedback("輪到您了！慢慢來，不著急。", "Your turn! Take your time.");
-    }, 1500);
+        
+        // Brief pause between AI turns
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    showFeedback("輪到您了！加油！", "It's your turn! You can do it!");
+}
+
+function addTileToTable(tile) {
+    const tableArea = document.getElementById('common-area');
+    const tileDiv = document.createElement('div');
+    tileDiv.className = `tile ${tile.color}`;
+    tileDiv.innerText = tile.color === 'joker' ? '☺' : tile.num;
+    tableArea.appendChild(tileDiv);
 }
 // 8. Checking for a Win
 function checkWin(playerHand, isHuman) {
@@ -189,4 +225,26 @@ function autoSave() {
         currentLang: currentLang
     };
     localStorage.setItem('saved_rummikub_game', JSON.stringify(gameState));
+}
+function isValidSet(tiles) {
+    if (tiles.length < 3) return false;
+
+    // Check if it's a "Group" (Same number, different colors)
+    const allSameNum = tiles.every(t => t.num === tiles[0].num || t.color === 'joker');
+    const colors = new Set(tiles.filter(t => t.color !== 'joker').map(t => t.color));
+    if (allSameNum && colors.size === tiles.filter(t => t.color !== 'joker').length) return true;
+
+    // Check if it's a "Run" (Same color, consecutive numbers)
+    const color = tiles.find(t => t.color !== 'joker').color;
+    const allSameColor = tiles.every(t => t.color === color || t.color === 'joker');
+    if (allSameColor) {
+        const nums = tiles.map(t => t.num).sort((a, b) => a - b);
+        // Simplified consecutive check (ignores Joker for now for simplicity)
+        for (let i = 0; i < nums.length - 1; i++) {
+            if (nums[i + 1] !== nums[i] + 1) return false;
+        }
+        return true;
+    }
+
+    return false;
 }
