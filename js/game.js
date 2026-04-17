@@ -9,7 +9,7 @@ let aiHands = [[], [], []]; // 3 AI Players
 let tableSets = []; // Tiles currently on the table
 // Global tracking for tiles moved to the table this turn
 let tilesMovedThisTurn = [];
-
+let tableTilesGlobal = [];
 
 // Add these variables to the top of game.js
 let initialMeldDone = false; // Tracks if the 30-point rule is met
@@ -444,23 +444,24 @@ function renderAiStatus() {
 
 // New function to handle the End Turn logic
 function endTurn() {
-    if (tilesMovedThisTurn.length === 0) {
-        showFeedback("您本回合未出牌，請出牌或抽牌。", "Please play a tile or draw.");
-        return;
+    // 1. Capture the current state of the board
+    const currentTableTiles = Array.from(document.getElementById('common-area').children).map(div => {
+        return {
+            num: parseInt(div.dataset.num),
+            color: div.dataset.color
+        };
+    });
+
+    // 2. Validation (The gatekeeper)
+    if (currentTableTiles.length > 0 && !isValidSet(currentTableTiles)) {
+        showFeedback("組合不完全！請確保每組牌至少有3張。", "Invalid combo!");
+        return; 
     }
 
-    const tableTiles = Array.from(document.getElementById('common-area').children).map(div => ({
-        num: parseInt(div.dataset.num),
-        color: div.dataset.color
-    }));
-
-    // In a full Rummikub rule set, we validate if ALL tiles on table form valid groups/runs
-    if (!isValidSet(tableTiles)) {
-        showFeedback("桌面組合無效！請確保每組牌至少3張且符合規則。", "Invalid combination on board.");
-        return;
-    }
-
-    tilesMovedThisTurn = []; // Clear for next turn
+    // 3. SUCCESS: Save the tiles to the global state so they don't disappear
+    tableTilesGlobal = currentTableTiles; 
+    
+    // 4. Trigger AI
     showFeedback("組合正確！輪到電腦...", "Valid! Computer's turn...");
     aiTurns();
 }
@@ -472,11 +473,14 @@ function addTileToTable(tile) {
     tileDiv.className = `tile ${tile.color} tile-placed`;
     tileDiv.innerText = tile.color === 'joker' ? '☺' : tile.num;
     
-    // Store data so we can validate later
+    // These data attributes are what the validator "reads"
     tileDiv.dataset.num = tile.num;
     tileDiv.dataset.color = tile.color;
     
     tableArea.appendChild(tileDiv);
+    
+    // Add to the global tracking array immediately
+    tableTilesGlobal.push(tile); 
 }
 function sortHand(criteria) {
     if (criteria === 'number') {
