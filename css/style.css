@@ -1,10 +1,12 @@
 /* General Settings */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f8ff; /* Soft blue background for eyes */
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background-color: #f0f8ff; /* Soft blue background to reduce eye strain */
     margin: 0;
     padding: 10px;
     color: #333;
+    -webkit-user-select: none; /* Prevents accidental text selection while clicking tiles */
+    user-select: none;
 }
 
 /* Big Buttons for easy clicking */
@@ -109,12 +111,12 @@ body {
     flex-wrap: wrap; 
     gap: 15px;
     padding: 25px;
-    min-height: 250px; /* Increased for better visibility */
-    background-color: #ffffff; /* Starts white */
-    border: 4px dashed #bbb; /* Dashed border to indicate placement area */
-    border-radius: 15px;
-    transition: background-color 0.5s ease;
+    min-height: 300px; /* Large area for free tile placement */
+    background-color: #ffffff; 
+    border: 5px dashed #aaa; /* Visual cue that tiles can be placed here */
+    border-radius: 20px;
     margin-bottom: 20px;
+    transition: background-color 0.5s ease;
 }
 /* We use !important to make sure this border shows up no matter what */
 .tile.selected {
