@@ -20,7 +20,7 @@ function updateUI() {
     document.getElementById('rules-header').innerText = translations.rules_title;
     document.getElementById('rules-content').innerText = translations.rules_content;
     document.getElementById('start-btn').innerText = translations.start_game;
-    document.getElementById('rank-btn').innerText = translations.rank_btn;
+    document.getElementById('rank-btn').innerText = translations.rank_btn || (currentLang === 'zh-tw' ? "排行榜" : "Rankings");
     
     // Game screen buttons
     document.getElementById('hint-btn').innerText = translations.hint_btn;
@@ -40,11 +40,23 @@ function setLanguage(lang) {
 
 // 4. Screen Switching Logic
 function initGame() {
+    // 1. Hide the Menu, Show the Game Screen
     document.getElementById('main-menu').style.display = 'none';
     document.getElementById('game-screen').style.display = 'block';
     
-    // We will call the actual game logic from game.js here later
-    console.log("Game started!");
+    // 2. Start the actual Rummikub logic from game.js
+    if (typeof createDeck === "function") {
+        createDeck(); 
+        // Deal tiles
+        playerHand = deck.splice(0, 14);
+        for (let i = 0; i < 3; i++) {
+            aiHands[i] = deck.splice(0, 14);
+        }
+        renderPlayerHand();
+        showFeedback("遊戲開始！祝您好運！", "Good luck! Let's play!");
+    } else {
+        console.error("Game logic not loaded yet!");
+    }
 }
 
 // Initialize on page load
