@@ -1,4 +1,3 @@
-let currentLang = localStorage.getItem('preferredLang') || 'zh-tw';
 
 // Game State Constants
 const COLORS = ['red', 'blue', 'orange', 'black'];
