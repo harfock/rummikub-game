@@ -52,11 +52,17 @@
                 </div>
         </div>
 
-        <div id="player-hand-container">
-            <h3>您的牌面：</h3>
-            <div id="player-tiles">
-                </div>
+       <div id="player-hand-container">
+    <div class="hand-header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px;">
+        <h3>您的牌面：</h3>
+        <div class="sort-btns">
+            <button onclick="sortHand('num')" class="btn-action">數字排序</button>
+            <button onclick="sortHand('color')" class="btn-action">顏色排序</button>
+            <button onclick="recallAllTiles()" class="btn-action" style="background: #f44336;">全部收回</button>
         </div>
+    </div>
+    <div id="player-tiles"></div>
+</div>
 
         <nav id="action-bar">
             <button class="btn-action btn-hint" onclick="showHint()">提示幫助 (Hint)</button>
