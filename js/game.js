@@ -39,19 +39,54 @@ function initGame() {
 }
 
 // 3. Display Tiles for Elderly (Large and Clear)
+let selectedTileIndex = null;
+
+// Updated display function with "Selection" visual
 function renderPlayerHand() {
     const container = document.getElementById('player-tiles');
-    container.innerHTML = ''; // Clear old tiles
+    container.innerHTML = ''; 
 
     playerHand.forEach((tile, index) => {
         const tileDiv = document.createElement('div');
-        tileDiv.className = `tile ${tile.color}`;
+        // If this tile is picked, give it a 'selected' border
+        tileDiv.className = `tile ${tile.color} ${selectedTileIndex === index ? 'selected' : ''}`;
         tileDiv.innerText = tile.color === 'joker' ? '☺' : tile.num;
         
-        // Large click area for elderly
+        // When clicked, run the selection logic
         tileDiv.onclick = () => selectTile(index);
         container.appendChild(tileDiv);
     });
+}
+
+function selectTile(index) {
+    // If clicking the same tile, deselect it
+    if (selectedTileIndex === index) {
+        selectedTileIndex = null;
+    } else {
+        selectedTileIndex = index;
+        showFeedback("您選中了牌，現在請按『完成出牌』或移動它。", "Tile selected! Now move it or finish.");
+    }
+    renderPlayerHand(); // Refresh the look to show the border
+}
+
+// Function to actually "play" the tile (Simplified for now)
+function submitMove() {
+    if (selectedTileIndex !== null) {
+        const tileToPlay = playerHand.splice(selectedTileIndex, 1)[0];
+        
+        // For now, let's just put it in the "Common Area" on the table
+        const tableArea = document.getElementById('common-area');
+        const tileDiv = document.createElement('div');
+        tileDiv.className = `tile ${tileToPlay.color}`;
+        tileDiv.innerText = tileToPlay.color === 'joker' ? '☺' : tileToPlay.num;
+        tableArea.appendChild(tileDiv);
+
+        selectedTileIndex = null;
+        renderPlayerHand();
+        showFeedback("打得好！繼續組合吧。", "Well played! Keep going.");
+    } else {
+        showFeedback("請先點選一張您想出的牌。", "Please select a tile first.");
+    }
 }
 
 // 4. Hint System
