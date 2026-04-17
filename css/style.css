@@ -105,14 +105,12 @@ body {
 
 /* Make the table area big enough to hold tiles */
 #common-area {
-    min-height: 200px;
-    background-color: #2e7d32; /* Classic green game table color */
-    border-radius: 15px;
-    padding: 20px;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: wrap; 
     gap: 10px;
-    margin-bottom: 20px;
+    padding: 20px;
+    min-height: 150px;
+    justify-content: flex-start; /* Keeps them in a row */
 }
 /* We use !important to make sure this border shows up no matter what */
 .tile.selected {
