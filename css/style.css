@@ -107,40 +107,41 @@ body {
 
 /* Make the table area big enough to hold tiles */
 /* Grid for the Common Area */
+/* The Common Area becomes a fixed-cell grid */
 #common-area {
     display: grid;
-    grid-template-columns: repeat(20, 70px); /* 20 columns */
-    grid-template-rows: repeat(10, 100px);   /* 10 rows, extendable */
-    gap: 5px;
-    padding: 10px;
-    background-color: #e8f5e9;
-    background-image: radial-gradient(#ccc 1px, transparent 1px);
-    background-size: 20px 20px; /* Visual grid dots/lines */
-    overflow: auto;
-    min-height: 400px;
+    grid-template-columns: repeat(20, 75px); /* 20 horizontal slots */
+    grid-template-rows: repeat(8, 110px);   /* 8 vertical slots */
+    gap: 10px;
+    padding: 20px;
+    background-color: #f1f8e9;
+    border: 4px inset #81c784;
+    overflow: auto; /* Scrollable if tiles go beyond view */
+    height: 450px;
 }
 
-/* Grid Cell */
+/* Individual Grid Cells */
 .grid-cell {
-    width: 70px;
-    height: 100px;
-    border: 1px dashed rgba(0,0,0,0.1);
-    box-sizing: border-box;
+    width: 75px;
+    height: 110px;
+    border: 1px dashed #ced4da;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
 }
 
-/* Tile Selection Animation */
-.tile.selected {
-    transform: translateY(-50%); /* Moves 50% upward */
-    border: 4px solid #FFD700;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-    z-index: 100;
+.grid-cell:hover {
+    background-color: rgba(76, 175, 80, 0.1);
 }
-/* We use !important to make sure this border shows up no matter what */
+
+/* The 50% Upward Selection Effect */
 .tile.selected {
-    border: 6px solid #FFD700 !important; 
-    transform: translateY(-15px); /* Lift the card up slightly */
-    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-    background-color: #fffdec; /* Make it slightly brighter */
+    transform: translateY(-40px); /* Moves upward */
+    border: 5px solid #FFD700 !important;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+    z-index: 10;
 }
 @keyframes successPop {
     0% { transform: scale(1); }
