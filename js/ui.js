@@ -39,23 +39,23 @@ function setLanguage(lang) {
 }
 
 // 4. Screen Switching Logic
+// This function handles the visual transition and triggers the game logic
 function initGame() {
     // 1. Hide the Menu, Show the Game Screen
-    document.getElementById('main-menu').style.display = 'none';
-    document.getElementById('game-screen').style.display = 'block';
+    const mainMenu = document.getElementById('main-menu');
+    const gameScreen = document.getElementById('game-screen');
+
+    if (mainMenu && gameScreen) {
+        mainMenu.style.display = 'none';
+        gameScreen.style.display = 'block';
+    }
     
     // 2. Start the actual Rummikub logic from game.js
-    if (typeof createDeck === "function") {
-        createDeck(); 
-        // Deal tiles
-        playerHand = deck.splice(0, 14);
-        for (let i = 0; i < 3; i++) {
-            aiHands[i] = deck.splice(0, 14);
-        }
-        renderPlayerHand();
-        showFeedback("遊戲開始！祝您好運！", "Good luck! Let's play!");
+    // We use the renamed function 'setupNewGame' to avoid naming conflicts
+    if (typeof setupNewGame === "function") {
+        setupNewGame(); 
     } else {
-        console.error("Game logic not loaded yet!");
+        console.error("Game logic (setupNewGame) not loaded yet!");
     }
 }
 
@@ -63,4 +63,9 @@ function initGame() {
 window.onload = () => {
     const savedLang = localStorage.getItem('preferredLang') || 'zh-tw';
     loadLanguage(savedLang);
+    
+    // Ensure the profile dropdown is populated if storage.js is loaded
+    if (typeof updateProfileDropdown === "function") {
+        updateProfileDropdown();
+    }
 };
