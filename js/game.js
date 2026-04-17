@@ -27,7 +27,7 @@ function shuffle(array) {
 
 // 2. Start Game Logic
 function setupNewGame() {
-    createDeck();
+    createDeck(); // createDeck(); // Creates 106 tiles (2 sets of 1-13 in 4 colors + 2 Jokers)
     
     // Deal 14 tiles to each player
     playerHand = deck.splice(0, 14);
@@ -36,9 +36,23 @@ function setupNewGame() {
     }
 
     renderPlayerHand();
-    showFeedback("遊戲開始！祝您好運！", "Good luck! Let's play!");
+    updateStatusBar(); // Show initial 50 remaining tiles
+    showFeedback("遊戲開始！祝您好運！您的回合，可以拖動牌到桌面。", "Good luck! Let's play! Your turn, drag tiles to the table.");
 }
-
+function updateStatusBar() {
+    for (let i = 0; i < 3; i++) {
+        const el = document.getElementById(`ai-${i+1}-count`);
+        if (el) {
+            // Adding "張" makes it easier for senior players to understand the value
+            el.innerText = `電腦 ${i+1}: ${aiHands[i].length} 張`;
+        }
+    }
+    
+    const deckEl = document.getElementById('deck-count');
+    if (deckEl) {
+        deckEl.innerText = `池中剩餘: ${deck.length} 張`;
+    }
+}
 // 3. Display Tiles for Elderly (Large and Clear)
 let selectedTileIndex = null;
 
@@ -76,7 +90,7 @@ function renderPlayerHand() {
         // Identify which tile is being moved
         tileDiv.ondragstart = (e) => {
             e.dataTransfer.setData("tileIndex", index);
-            e.dataTransfer.setData("source", "hand");
+            
         };
 
         container.appendChild(tileDiv);
@@ -89,15 +103,19 @@ commonArea.ondragover = (e) => e.preventDefault(); // Necessary to allow drop
 
 commonArea.ondrop = (e) => {
     const index = e.dataTransfer.getData("tileIndex");
-    const source = e.dataTransfer.getData("source");
+    
 
-    if (source === "hand") {
+    if (index !== "") {
         const tile = playerHand.splice(index, 1)[0];
         addTileToTable(tile);
         renderPlayerHand();
-        // Optional: tableArea.classList.add('board-active'); // From your screenshot
     }
 };
+
+function endPlayerTurn() {
+    showFeedback("結束回合，輪到電腦...", "Turn ended, AI playing...");
+    aiTurns();
+}
 
 // Function to actually "play" the tile
 function submitMove() {
@@ -169,39 +187,76 @@ function showFeedback(zh, en) {
 
 // 7. Simplified AI Logic (1 vs 3)
 // Fix AI Turns to properly show progress
+// 4. Enhanced AI Turn Logic
 async function aiTurns() {
+    // Loop through each of the 3 AI opponents
     for (let i = 0; i < 3; i++) {
+        // 1. Visual feedback for the senior player
         showFeedback(`電腦 ${i + 1} 正在思考...`, `Computer ${i + 1} is thinking...`);
-        await new Promise(r => setTimeout(r, 1500));
+        updateStatusBar(); // Ensure tile counts are visible
+        
+        // 2. Realistic "Thinking" pause
+        await new Promise(r => setTimeout(r, 2000));
 
         let played = false;
-        // AI tries to find a valid set in its own hand
-        for (let j = 0; j < aiHands[i].length; j++) {
-            // This is a simplified check: AI looks for 3 matching numbers
-            const tile = aiHands[i][j];
-            const matches = aiHands[i].filter(t => t.num === tile.num);
+        
+        // 3. Simple AI Strategy: Look for "Groups" (Same Number, Different Colors)
+        // Group tiles by number
+        const hand = aiHands[i];
+        const groups = {};
+        hand.forEach(tile => {
+            if (tile.color !== 'joker') {
+                if (!groups[tile.num]) groups[tile.num] = [];
+                groups[tile.num].push(tile);
+            }
+        });
+
+        // Check if any number has 3 or more distinct colors
+        for (const num in groups) {
+            const potentialSet = groups[num];
+            // Filter out duplicate colors in the same number group
+            const uniqueColorSet = [];
+            const seenColors = new Set();
             
-            if (matches.length >= 3) {
-                // Play the whole set to the common area
-                matches.forEach(m => {
-                    const idx = aiHands[i].indexOf(m);
-                    const t = aiHands[i].splice(idx, 1)[0];
-                    addTileToTable(t);
+            potentialSet.forEach(t => {
+                if (!seenColors.has(t.color)) {
+                    uniqueColorSet.push(t);
+                    seenColors.add(t.color);
+                }
+            });
+
+            if (uniqueColorSet.length >= 3) {
+                // Play this valid set to the table
+                uniqueColorSet.forEach(tile => {
+                    const tileIndex = hand.findIndex(t => t.num === tile.num && t.color === tile.color);
+                    const playedTile = hand.splice(tileIndex, 1)[0];
+                    addTileToTable(playedTile);
                 });
+                
                 showFeedback(`電腦 ${i + 1} 組合了牌組！`, `Computer ${i + 1} played a set!`);
                 played = true;
-                break; 
+                break; // AI plays one set per turn to keep it simple for the user
             }
         }
 
-        if (!played && deck.length > 0) {
-            aiHands[i].push(deck.pop());
-            showFeedback(`電腦 ${i + 1} 抽了牌。`, `Computer ${i + 1} drew a tile.`);
+        // 4. If no valid play was found, the AI must draw a tile
+        if (!played) {
+            if (deck.length > 0) {
+                const drawnTile = deck.pop();
+                aiHands[i].push(drawnTile);
+                showFeedback(`電腦 ${i + 1} 沒有可以出的牌，抽了一張。`, `Computer ${i + 1} drew a tile.`);
+            } else {
+                showFeedback(`電腦 ${i + 1} 跳過回合。`, `Computer ${i + 1} skipped turn.`);
+            }
         }
-        renderAiStatus(); // Update the tile counts
-        await new Promise(r => setTimeout(r, 800));
+
+        updateStatusBar(); // Refresh counts after the AI action
+        await new Promise(r => setTimeout(r, 1000)); // Short pause before next AI
     }
-    showFeedback("輪到您了！加油！", "Your turn!");
+
+    // 5. Final transition back to the human player
+    showFeedback("輪到您了！請拖動牌或抽牌。", "Your turn! Drag a tile or draw.");
+    autoSave(); // Save progress after AI finishes
 }
 
 function addTileToTable(tile) {
