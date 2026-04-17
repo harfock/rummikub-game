@@ -172,10 +172,11 @@ function playerDrawTile() {
         const newTile = deck.pop();
         playerHand.push(newTile);
         renderPlayerHand();
-        showFeedback("抽了一張牌，看能不能組合它！", "Drew a tile! Can you use it?");
+        updateStatusBar(); // Update the "Remaining Tiles" count
+        showFeedback("您抽了一張牌，換電腦出牌。", "You drew a tile. Computer's turn.");
         
-        // End turn automatically after drawing
-        setTimeout(aiTurns, 1000);
+        // Drawing a tile ends the turn immediately
+        setTimeout(aiTurns, 1500);
     }
 }
 
@@ -343,4 +344,41 @@ function renderAiStatus() {
     document.getElementById('ai-2-count').innerText = `電腦 2: ${aiHands[1].length} 張`;
     document.getElementById('ai-3-count').innerText = `電腦 3: ${aiHands[2].length} 張`;
     document.getElementById('deck-count').innerText = `剩餘牌數: ${deck.length}`;
+}
+// game.js
+
+// New function to handle the End Turn logic
+function endTurn() {
+    // 1. Gather all tiles currently in the common area
+    const currentTableTiles = Array.from(document.getElementById('common-area').children).map(div => {
+        return {
+            num: parseInt(div.dataset.num),
+            color: div.dataset.color
+        };
+    });
+
+    // 2. Logic Check: In a real game, every set on the board must be valid.
+    // For now, we check if the tiles played this turn form at least one valid set.
+    if (currentTableTiles.length > 0 && !isValidSet(currentTableTiles)) {
+        showFeedback("組合不完全！請確保每組牌至少有3張且符合規則。", "Invalid combo! Ensure sets have 3+ tiles.");
+        return; // Stop the player from passing
+    }
+
+    // 3. If valid, trigger AI turns
+    showFeedback("組合正確！輪到電腦...", "Valid! Computer's turn...");
+    aiTurns();
+}
+
+// Modify addTileToTable to store data attributes for easy validation
+function addTileToTable(tile) {
+    const tableArea = document.getElementById('common-area');
+    const tileDiv = document.createElement('div');
+    tileDiv.className = `tile ${tile.color} tile-placed`;
+    tileDiv.innerText = tile.color === 'joker' ? '☺' : tile.num;
+    
+    // Store data so we can validate later
+    tileDiv.dataset.num = tile.num;
+    tileDiv.dataset.color = tile.color;
+    
+    tableArea.appendChild(tileDiv);
 }
