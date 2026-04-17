@@ -1,3 +1,5 @@
+let currentLang = localStorage.getItem('preferredLang') || 'zh-tw';
+
 // Game State Constants
 const COLORS = ['red', 'blue', 'orange', 'black'];
 const NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
@@ -84,35 +86,32 @@ function renderPlayerHand() {
     });
 }
 
-// Function to actually "play" the tile (Simplified for now)
+// Function to actually "play" the tile
 function submitMove() {
     if (selectedTileIndex !== null) {
         const tileToPlay = playerHand.splice(selectedTileIndex, 1)[0];
         
-        // For now, let's just put it in the "Common Area" on the table
-        const tableArea = document.getElementById('common-area');
-        const tileDiv = document.createElement('div');
-        tileDiv.className = `tile ${tileToPlay.color}`;
-        tileDiv.innerText = tileToPlay.color === 'joker' ? '☺' : tileToPlay.num;
-        tableArea.appendChild(tileDiv);
+        // Put it in the "Common Area" on the table
+        addTileToTable(tileToPlay);
 
         selectedTileIndex = null;
         renderPlayerHand();
+        
+        // Check if Human won immediately after playing
+        if (playerHand.length === 0) {
+            showFeedback("太厲害了！您贏了！您是今天的冠軍！", "Amazing! You won! You are the champion today!");
+            alert("恭喜獲勝！🏆");
+            return; 
+        }
+
         showFeedback("打得好！繼續組合吧。", "Well played! Keep going.");
+        
+        // After human finishes, it is AI turn
+        aiTurns();
     } else {
         showFeedback("請先點選一張您想出的牌。", "Please select a tile first.");
     }
-// Check if Human won
-if (playerHand.length === 0) {
-    showFeedback("太厲害了！您贏了！您是今天的冠軍！", "Amazing! You won! You are the champion today!");
-    // Trigger a celebratory effect or simple alert
-    alert("恭喜獲勝！🏆");
-    return;
-}
-
-// After human finishes, it's AI turn
-aiTurns();
-}
+} // <--- Make sure this bracket is here!
 
 // 4. Hint System
 function showHint() {
