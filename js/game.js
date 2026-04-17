@@ -283,3 +283,9 @@ function isValidSet(tiles) {
 
     return false;
 }
+function renderAiStatus() {
+    document.getElementById('ai-1-count').innerText = `電腦 1: ${aiHands[0].length} 張`;
+    document.getElementById('ai-2-count').innerText = `電腦 2: ${aiHands[1].length} 張`;
+    document.getElementById('ai-3-count').innerText = `電腦 3: ${aiHands[2].length} 張`;
+    document.getElementById('deck-count').innerText = `剩餘牌數: ${deck.length}`;
+}
