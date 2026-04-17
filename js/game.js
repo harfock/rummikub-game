@@ -115,16 +115,23 @@ function submitMove() {
 
 // 4. Hint System
 function showHint() {
-    // Find if the player has any two cards of the same number
     const counts = {};
     playerHand.forEach(t => counts[t.num] = (counts[t.num] || 0) + 1);
     
     const pairNum = Object.keys(counts).find(num => counts[num] >= 2);
     
     if (pairNum) {
-        showFeedback(`提示：您有一對數字 ${pairNum}，試著組合它們！`, `Hint: You have a pair of ${pairNum}s!`);
+        showFeedback(`提示：您有數字 ${pairNum} 的組合，快試試！`, `Hint: You have a set of ${pairNum}s!`);
+        
+        // Find the matching tiles and make them wiggle
+        const allTiles = document.querySelectorAll('.tile');
+        allTiles.forEach(div => {
+            if (div.innerText == pairNum) {
+                div.style.animation = "wiggle 0.5s ease infinite";
+            }
+        });
     } else {
-        showFeedback("暫時沒有明顯組合，抽一張牌試試看？", "No obvious moves, try drawing a tile!");
+        showFeedback("暫時沒看到組合，抽一張牌吧！", "No moves yet, try drawing!");
     }
 }
 
