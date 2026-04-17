@@ -154,40 +154,37 @@ function showFeedback(zh, en) {
 }
 
 // 7. Simplified AI Logic (1 vs 3)
+// Fix AI Turns to properly show progress
 async function aiTurns() {
-    // We loop through 3 AI players
     for (let i = 0; i < 3; i++) {
         showFeedback(`電腦 ${i + 1} 正在思考...`, `Computer ${i + 1} is thinking...`);
-        
-        // Wait 2 seconds so the user doesn't feel rushed
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(r => setTimeout(r, 1500));
 
-        // Simple AI: 50% chance to "play" a random card if they have many, 
-        // otherwise they draw.
-        if (aiHands[i].length > 5 && Math.random() > 0.5) {
+        if (aiHands[i].length > 0 && Math.random() > 0.7) {
             const playedTile = aiHands[i].splice(0, 1)[0];
             addTileToTable(playedTile);
-            showFeedback(`電腦 ${i + 1} 出了一張牌！`, `Computer ${i + 1} played a tile!`);
+            showFeedback(`電腦 ${i + 1} 出牌了！`, `Computer ${i + 1} played!`);
         } else {
-            if (deck.length > 0) {
-                aiHands[i].push(deck.pop());
-                showFeedback(`電腦 ${i + 1} 抽了一張牌。`, `Computer ${i + 1} drew a tile.`);
-            }
+            if (deck.length > 0) aiHands[i].push(deck.pop());
         }
-        
-        // Brief pause between AI turns
-        await new Promise(resolve => setTimeout(resolve, 1000));
     }
-
-    showFeedback("輪到您了！加油！", "It's your turn! You can do it!");
+    showFeedback("輪到您了！加油！", "It's your turn! Go!");
 }
 
 function addTileToTable(tile) {
     const tableArea = document.getElementById('common-area');
+    if (!tableArea) return;
+
     const tileDiv = document.createElement('div');
-    tileDiv.className = `tile ${tile.color}`;
+    // Ensure color class is applied for CSS visibility
+    tileDiv.className = `tile ${tile.color} tile-placed`; 
     tileDiv.innerText = tile.color === 'joker' ? '☺' : tile.num;
+    
+    // Add to table area
     tableArea.appendChild(tileDiv);
+    
+    // Change background to light green to show it's an "active" board
+    tableArea.style.backgroundColor = "#e8f5e9"; 
 }
 // 8. Checking for a Win
 function checkWin(playerHand, isHuman) {
