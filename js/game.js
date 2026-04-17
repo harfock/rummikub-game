@@ -65,25 +65,39 @@ function selectTile(index) {
 
 function renderPlayerHand() {
     const container = document.getElementById('player-tiles');
-    if (!container) return;
     container.innerHTML = ''; 
 
     playerHand.forEach((tile, index) => {
         const tileDiv = document.createElement('div');
-        
-        // Notice we add 'selected' here if the index matches
-        let classes = `tile ${tile.color}`;
-        if (selectedTileIndex === index) {
-            classes += " selected";
-        }
-        
-        tileDiv.className = classes;
+        tileDiv.className = `tile ${tile.color}`;
         tileDiv.innerText = tile.color === 'joker' ? '☺' : tile.num;
-        
-        tileDiv.onclick = () => selectTile(index);
+        tileDiv.draggable = true; // Enable dragging
+
+        // Identify which tile is being moved
+        tileDiv.ondragstart = (e) => {
+            e.dataTransfer.setData("tileIndex", index);
+            e.dataTransfer.setData("source", "hand");
+        };
+
         container.appendChild(tileDiv);
     });
 }
+
+// Setup the Common Area to receive drops
+const commonArea = document.getElementById('common-area');
+commonArea.ondragover = (e) => e.preventDefault(); // Necessary to allow drop
+
+commonArea.ondrop = (e) => {
+    const index = e.dataTransfer.getData("tileIndex");
+    const source = e.dataTransfer.getData("source");
+
+    if (source === "hand") {
+        const tile = playerHand.splice(index, 1)[0];
+        addTileToTable(tile);
+        renderPlayerHand();
+        // Optional: tableArea.classList.add('board-active'); // From your screenshot
+    }
+};
 
 // Function to actually "play" the tile
 function submitMove() {
@@ -160,15 +174,34 @@ async function aiTurns() {
         showFeedback(`電腦 ${i + 1} 正在思考...`, `Computer ${i + 1} is thinking...`);
         await new Promise(r => setTimeout(r, 1500));
 
-        if (aiHands[i].length > 0 && Math.random() > 0.7) {
-            const playedTile = aiHands[i].splice(0, 1)[0];
-            addTileToTable(playedTile);
-            showFeedback(`電腦 ${i + 1} 出牌了！`, `Computer ${i + 1} played!`);
-        } else {
-            if (deck.length > 0) aiHands[i].push(deck.pop());
+        let played = false;
+        // AI tries to find a valid set in its own hand
+        for (let j = 0; j < aiHands[i].length; j++) {
+            // This is a simplified check: AI looks for 3 matching numbers
+            const tile = aiHands[i][j];
+            const matches = aiHands[i].filter(t => t.num === tile.num);
+            
+            if (matches.length >= 3) {
+                // Play the whole set to the common area
+                matches.forEach(m => {
+                    const idx = aiHands[i].indexOf(m);
+                    const t = aiHands[i].splice(idx, 1)[0];
+                    addTileToTable(t);
+                });
+                showFeedback(`電腦 ${i + 1} 組合了牌組！`, `Computer ${i + 1} played a set!`);
+                played = true;
+                break; 
+            }
         }
+
+        if (!played && deck.length > 0) {
+            aiHands[i].push(deck.pop());
+            showFeedback(`電腦 ${i + 1} 抽了牌。`, `Computer ${i + 1} drew a tile.`);
+        }
+        renderAiStatus(); // Update the tile counts
+        await new Promise(r => setTimeout(r, 800));
     }
-    showFeedback("輪到您了！加油！", "It's your turn! Go!");
+    showFeedback("輪到您了！加油！", "Your turn!");
 }
 
 function addTileToTable(tile) {
