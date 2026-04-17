@@ -95,3 +95,22 @@ body {
 .black { color: #000; }
 .orange { color: #f57c00; }
 .joker { color: #9c27b0; }
+
+/* Highlights the selected tile with a thick gold border for elderly eyes */
+.selected {
+    border: 5px solid #FFD700 !important;
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+/* Make the table area big enough to hold tiles */
+#common-area {
+    min-height: 200px;
+    background-color: #2e7d32; /* Classic green game table color */
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
