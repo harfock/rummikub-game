@@ -1,0 +1,12 @@
+{
+  "title": "Rummikub for Seniors",
+  "rules_title": "Game Rules",
+  "rules_content": "1. Create runs (e.g., Red 1-2-3) or groups (e.g., Red 1, Blue 1, Yellow 1).\n2. First play must total 30 points. If no moves, click 'Draw'.\n3. The first to clear their hand wins!",
+  "start_game": "Start Game",
+  "hint_btn": "Get Hint",
+  "draw_btn": "Draw Tile",
+  "save_btn": "Save Game",
+  "encourage_win": "Amazing! You are a master player!",
+  "encourage_lose": "Well played! You're getting better every time!",
+  "hint_msg": "Try checking for a group of three!"
+}
