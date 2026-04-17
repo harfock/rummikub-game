@@ -246,4 +246,4 @@ function isValidSet(tiles) {
     }
 
     return false;
-}//
+} //
