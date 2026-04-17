@@ -114,3 +114,10 @@ body {
     gap: 10px;
     margin-bottom: 20px;
 }
+/* We use !important to make sure this border shows up no matter what */
+.tile.selected {
+    border: 6px solid #FFD700 !important; 
+    transform: translateY(-15px); /* Lift the card up slightly */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    background-color: #fffdec; /* Make it slightly brighter */
+}
