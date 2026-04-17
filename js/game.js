@@ -42,31 +42,46 @@ function initGame() {
 let selectedTileIndex = null;
 
 // Updated display function with "Selection" visual
-function renderPlayerHand() {
-    const container = document.getElementById('player-tiles');
-    container.innerHTML = ''; 
 
-    playerHand.forEach((tile, index) => {
-        const tileDiv = document.createElement('div');
-        // If this tile is picked, give it a 'selected' border
-        tileDiv.className = `tile ${tile.color} ${selectedTileIndex === index ? 'selected' : ''}`;
-        tileDiv.innerText = tile.color === 'joker' ? '☺' : tile.num;
-        
-        // When clicked, run the selection logic
-        tileDiv.onclick = () => selectTile(index);
-        container.appendChild(tileDiv);
-    });
-}
 
 function selectTile(index) {
-    // If clicking the same tile, deselect it
+    console.log("Tile clicked:", index); // This helps us debug
+    
+    // Toggle selection
     if (selectedTileIndex === index) {
         selectedTileIndex = null;
     } else {
         selectedTileIndex = index;
-        showFeedback("您選中了牌，現在請按『完成出牌』或移動它。", "Tile selected! Now move it or finish.");
     }
-    renderPlayerHand(); // Refresh the look to show the border
+    
+    // This is the most important part: tell the UI to refresh
+    renderPlayerHand(); 
+    
+    if (selectedTileIndex !== null) {
+        showFeedback("您選中了牌，現在請按『完成出牌』。", "Selected! Now click Finish.");
+    }
+}
+
+function renderPlayerHand() {
+    const container = document.getElementById('player-tiles');
+    if (!container) return;
+    container.innerHTML = ''; 
+
+    playerHand.forEach((tile, index) => {
+        const tileDiv = document.createElement('div');
+        
+        // Notice we add 'selected' here if the index matches
+        let classes = `tile ${tile.color}`;
+        if (selectedTileIndex === index) {
+            classes += " selected";
+        }
+        
+        tileDiv.className = classes;
+        tileDiv.innerText = tile.color === 'joker' ? '☺' : tile.num;
+        
+        tileDiv.onclick = () => selectTile(index);
+        container.appendChild(tileDiv);
+    });
 }
 
 // Function to actually "play" the tile (Simplified for now)
