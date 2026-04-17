@@ -10,11 +10,14 @@ let tableSets = []; // Tiles currently on the table
 // Global tracking for tiles moved to the table this turn
 let tilesMovedThisTurn = [];
 let tableTilesGlobal = [];
-
+let selectedFromHand = null; // Stores index of selected tile in playerHand
+let selectedFromBoard = null; // Stores {row, col} of tile on board
 // Add these variables to the top of game.js
 let initialMeldDone = false; // Tracks if the 30-point rule is met
 let tilesPlayedThisTurn = []; // Track tiles moved from hand to table this turn
-
+let selectedHandIndex = null;
+let selectedBoardPos = null; // { row, col }
+let boardState = Array(8).fill().map(() => Array(20).fill(null)); // 8x20 Grid Matrix
 // Allow dragging tiles BACK to the hand
 const playerHandArea = document.getElementById('player-tiles');
 playerHandArea.ondragover = (e) => e.preventDefault();
@@ -156,51 +159,101 @@ function selectTile(index) {
     }
 }
 
+// 1. Render Player Hand with Click-to-Select
 function renderPlayerHand() {
     const container = document.getElementById('player-tiles');
-    if (!container) return;
     container.innerHTML = ''; 
 
     playerHand.forEach((tile, index) => {
-        const tileDiv = createTileElement(tile); // Now this will work!
-        tileDiv.draggable = true;
+        const tileDiv = createTileElement(tile);
         
-        tileDiv.ondragstart = (e) => {
-            e.dataTransfer.setData("tileIndex", index);
-            e.dataTransfer.setData("source", "hand");
+        // Apply selection class if this index is selected
+        if (selectedHandIndex === index) {
+            tileDiv.classList.add('selected');
+        }
+
+        tileDiv.onclick = () => {
+            if (selectedHandIndex === index) {
+                selectedHandIndex = null; // Deselect if clicked again
+            } else {
+                selectedHandIndex = index;
+                selectedBoardPos = null; // Clear board selection
+            }
+            renderPlayerHand();
+            renderTable(); // Refresh table to clear board selections
         };
-        
         container.appendChild(tileDiv);
     });
 }
 
-// Enable dropping tiles back into the hand area
-const playerTilesArea = document.getElementById('player-tiles');
-playerTilesArea.ondragover = (e) => e.preventDefault();
-playerTilesArea.ondrop = (e) => {
-    const source = e.dataTransfer.getData("source");
-    if (source === "table") {
-        const tileData = JSON.parse(e.dataTransfer.getData("tileData"));
-        
-        // Remove from visual table
-        const tableArea = document.getElementById('common-area');
-        const tileElements = Array.from(tableArea.children);
-        const elementToRemove = tileElements.find(el => 
-            el.dataset.num == tileData.num && el.dataset.color == tileData.color
-        );
-        
-        if (elementToRemove) {
-            tableArea.removeChild(elementToRemove);
-            // Add back to hand
-            playerHand.push(tileData);
-            // Remove from turn tracker
-            tilesMovedThisTurn = tilesMovedThisTurn.filter(t => 
-                !(t.num === tileData.num && t.color === tileData.color)
-            );
-            renderPlayerHand();
+// Render the 8x20 Grid
+function renderTable() {
+    const tableArea = document.getElementById('common-area');
+    tableArea.innerHTML = '';
+
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 20; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            
+            const tile = boardState[r][c];
+            if (tile) {
+                const tileDiv = createTileElement(tile);
+                if (selectedBoardPos && selectedBoardPos.r === r && selectedBoardPos.c === c) {
+                    tileDiv.classList.add('selected');
+                }
+                
+                tileDiv.onclick = (e) => {
+                    e.stopPropagation();
+                    handleTileOnBoardClick(r, c);
+                };
+                cell.appendChild(tileDiv);
+            } else {
+                cell.onclick = () => handleEmptyCellClick(r, c);
+            }
+            tableArea.appendChild(cell);
         }
     }
-};
+}
+function handleEmptyCellClick(r, c) {
+    // Case 1: Moving tile from Hand to Grid
+    if (selectedHandIndex !== null) {
+        const tile = playerHand.splice(selectedHandIndex, 1)[0];
+        boardState[r][c] = tile;
+        selectedHandIndex = null;
+    } 
+    // Case 2: Moving tile from one Grid spot to another
+    else if (selectedBoardPos !== null) {
+        boardState[r][c] = boardState[selectedBoardPos.r][selectedBoardPos.c];
+        boardState[selectedBoardPos.r][selectedBoardPos.c] = null;
+        selectedBoardPos = null;
+    }
+    renderPlayerHand();
+    renderTable();
+}
+
+function handleTileOnBoardClick(r, c) {
+    // Case 3: Insert Hand tile into an existing Combo (Shift existing tiles)
+    if (selectedHandIndex !== null) {
+        insertTileAt(r, c, playerHand.splice(selectedHandIndex, 1)[0]);
+        selectedHandIndex = null;
+    } 
+    // Case 4: Select a tile on board to move it elsewhere
+    else {
+        selectedBoardPos = { r, c };
+    }
+    renderPlayerHand();
+    renderTable();
+}
+
+// Logic to shift tiles to the right when inserting
+function insertTileAt(r, col, newTile) {
+    // Simple shift logic: move everything from col onwards to the right
+    for (let i = 19; i > col; i--) {
+        boardState[r][i] = boardState[r][i-1];
+    }
+    boardState[r][col] = newTile;
+}
 
 function endPlayerTurn() {
     showFeedback("結束回合，輪到電腦...", "Turn ended, AI playing...");
@@ -233,7 +286,50 @@ function submitMove() {
         showFeedback("請先點選一張您想出的牌。", "Please select a tile first.");
     }
 } 
+// 2. Initialize Common Area Grid
+function initGrid() {
+    const table = document.getElementById('common-area');
+    table.innerHTML = '';
+    
+    // Create a 20x10 grid (expandable)
+    for (let i = 0; i < 200; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.dataset.index = i;
+        
+        cell.onclick = (e) => handleGridClick(i);
+        table.appendChild(cell);
+    }
+}
 
+function handleGridClick(gridIndex) {
+    const cell = document.querySelector(`.grid-cell[data-index='${gridIndex}']`);
+    
+    // IF user has a tile selected from hand
+    if (selectedFromHand !== null) {
+        const tile = playerHand.splice(selectedFromHand, 1)[0];
+        placeTileOnGrid(tile, cell);
+        selectedFromHand = null;
+        renderPlayerHand();
+    } 
+    // IF user wants to move a tile already on board
+    else if (cell.hasChildNodes() && selectedFromBoard === null) {
+        selectedFromBoard = gridIndex;
+        cell.firstChild.classList.add('selected');
+    }
+    // IF user is moving a board tile to a NEW cell
+    else if (!cell.hasChildNodes() && selectedFromBoard !== null) {
+        const oldCell = document.querySelector(`.grid-cell[data-index='${selectedFromBoard}']`);
+        const tileDiv = oldCell.firstChild;
+        cell.appendChild(tileDiv);
+        selectedFromBoard = null;
+    }
+}
+
+function placeTileOnGrid(tile, cell) {
+    const tileDiv = createTileElement(tile);
+    cell.appendChild(tileDiv);
+}
 // 4. Hint System
 function showHint() {
     const counts = {};
