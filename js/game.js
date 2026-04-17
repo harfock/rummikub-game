@@ -111,7 +111,7 @@ function submitMove() {
     } else {
         showFeedback("請先點選一張您想出的牌。", "Please select a tile first.");
     }
-} // <--- Make sure this bracket is here!
+} 
 
 // 4. Hint System
 function showHint() {
