@@ -98,3 +98,45 @@ function aiTurns() {
         showFeedback("輪到您了！慢慢來，不著急。", "Your turn! Take your time.");
     }, 1500);
 }
+// 8. Checking for a Win
+function checkWin(playerHand, isHuman) {
+    if (playerHand.length === 0) {
+        if (isHuman) {
+            // Big win message!
+            showEndGame(translations.encourage_win, "gold");
+            updateRanking(currentProfile, 100); // Add score
+        } else {
+            // Human lost, but we still encourage them
+            showEndGame(translations.encourage_lose, "silver");
+        }
+        return true;
+    }
+    return false;
+}
+
+// 9. End Game Screen (Elderly-Friendly Overlay)
+function showEndGame(message, color) {
+    const overlay = document.createElement('div');
+    overlay.id = "game-over-overlay";
+    overlay.style.backgroundColor = color === "gold" ? "#fff3cd" : "#e2e3e5";
+    
+    overlay.innerHTML = `
+        <div class="overlay-content">
+            <h1 style="font-size: 3rem;">${message}</h1>
+            <button class="btn-large" onclick="location.reload()">再玩一次 (Play Again)</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+// 10. Automatic Saving
+// We call this every time a turn ends so they never lose progress
+function autoSave() {
+    const gameState = {
+        playerHand: playerHand,
+        aiHands: aiHands,
+        deck: deck,
+        currentLang: currentLang
+    };
+    localStorage.setItem('saved_rummikub_game', JSON.stringify(gameState));
+}
