@@ -613,3 +613,23 @@ function sortHand(criteria) {
     renderPlayerHand();
     showFeedback("手牌已排序", "Hand sorted");
 }
+function sortHand(type) {
+    playerHand.sort((a, b) => {
+        if (type === 'num') return a.num - b.num || a.color.localeCompare(b.color);
+        return a.color.localeCompare(b.color) || a.num - b.num;
+    });
+    renderPlayerHand();
+}
+
+function recallAllTiles() {
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 20; c++) {
+            if (boardState[r][c]) {
+                playerHand.push(boardState[r][c]);
+                boardState[r][c] = null;
+            }
+        }
+    }
+    renderPlayerHand();
+    renderTable();
+}
